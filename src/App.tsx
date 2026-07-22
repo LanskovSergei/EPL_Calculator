@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ВходныеДанные, РезультатРасчёта } from './types';
-import { calculate, parseISODate } from './calc';
+import { parseISODate } from './calc';
+import { calculateSmart } from './api';
 import { начальныеДанные, демоДанные } from './defaults';
 import { DriversSection } from './components/DriversSection';
 import { RefuelsSection } from './components/RefuelsSection';
@@ -27,20 +28,28 @@ function numField(value: string): number | '' {
 export default function App() {
   const [data, setData] = useState<ВходныеДанные>(начальныеДанные);
   const [result, setResult] = useState<РезультатРасчёта | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const upd = <K extends keyof ВходныеДанные>(key: K, value: ВходныеДанные[K]) =>
     setData((d) => ({ ...d, [key]: value }));
 
   const multiDay = data.видСообщения === 'междугородное' || data.видСообщения === 'международное';
 
-  const onCalc = () => {
+  const onCalc = async () => {
     const errs = validate(data);
     if (errs.length) {
       setResult({ листы: [], предупреждения: errs, расход: null });
-    } else {
-      setResult(calculate(data));
+      setTimeout(() => document.getElementById('resultsCard')?.scrollIntoView({ behavior: 'smooth' }), 0);
+      return;
     }
-    setTimeout(() => document.getElementById('resultsCard')?.scrollIntoView({ behavior: 'smooth' }), 0);
+    setLoading(true);
+    try {
+      const r = await calculateSmart(data);
+      setResult(r);
+    } finally {
+      setLoading(false);
+      setTimeout(() => document.getElementById('resultsCard')?.scrollIntoView({ behavior: 'smooth' }), 0);
+    }
   };
 
   return (
@@ -170,7 +179,9 @@ export default function App() {
         <RefuelsSection заправки={data.заправки} onChange={(заправки) => upd('заправки', заправки)} />
 
         <div className="calc-actions">
-          <button type="button" className="btn-primary" onClick={onCalc}>Посчитать</button>
+          <button type="button" className="btn-primary" onClick={onCalc} disabled={loading}>
+            {loading ? 'Считаю…' : 'Посчитать'}
+          </button>
           <button type="button" className="btn-ghost" onClick={() => { setData(начальныеДанные()); setResult(null); }}>
             Сбросить
           </button>
