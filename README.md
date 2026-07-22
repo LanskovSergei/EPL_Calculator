@@ -1,27 +1,3 @@
-# Калькулятор пробега ГСМ — MVP (Этап 1, Шаг 1.1)
-
-Внутренний инструмент для сотрудников «Предрейс»: восстановление путевых листов
-по чекам с АЗС. Реализует **Шаг 1.1** технического задания — калькулятор пробега
-с построчным текстовым выводом по каждому путевому листу.
-
-Стек: **Vite + React 18 + TypeScript** (фронт) + **FastAPI / Python** (бэкенд, `backend/`).
-
-## Фронт: запуск
-
-```bash
-npm install
-npm run dev      # локальный сервер на http://localhost:5173
-```
-
-Сборка production-версии:
-
-```bash
-npm run build    # результат в dist/
-npm run preview  # предпросмотр собранной версии
-```
-
-> Требуется Node.js 18+. Путь к проекту должен быть без кириллицы (иначе dev-сервер Vite на Windows может не отдавать модули).
-
 ## Фронт ↔ Бэкенд
 
 Фронт вызывает `POST /api/calculate` (см. `src/api.ts`, `calculateSmart()`).
@@ -31,25 +7,6 @@ npm run preview  # предпросмотр собранной версии
 об этом в результатах; маршрут по АЗС в офлайн-режиме не строится (нужен
 бэкенд с адресами заправок).
 
-Для локальной разработки запусти оба процесса:
-```bash
-# терминал 1
-cd backend && uvicorn app.main:app --reload --port 8000
-# терминал 2
-npm run dev
-```
-
-## Бэкенд: запуск
-
-```bash
-cd backend
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-# Swagger: http://localhost:8000/docs
-```
-
-Подробности — `backend/README.md` и `WEEK1_NOTES.md`.
 
 ## Структура
 
@@ -80,10 +37,6 @@ uvicorn app.main:app --reload --port 8000
       ├─ schemas.py        # pydantic-модели входа/выхода
       └─ calc.py           # движок расчёта (порт src/calc.ts на Python)
 ```
-
-Логика расчёта изолирована в `src/calc.ts` (фронт, чистые функции без React)
-и продублирована 1:1 в `backend/app/calc.py` (бэкенд) — оба движка дают
-одинаковый результат; их можно переиспользовать на шагах 1.2 и 2.x без изменений.
 
 ## Формулы и модель расчёта
 
