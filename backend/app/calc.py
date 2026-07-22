@@ -232,6 +232,7 @@ def calculate(inp: ВходныеДанные) -> РезультатРасчёт
             {
                 "when": datetime.combine(r.дата, r.время or time(0, 0)),
                 "volume": r.объём,
+                "address": r.адрес,
                 "applied": False,
             }
             for r in inp.заправки
@@ -265,6 +266,7 @@ def calculate(inp: ВходныеДанные) -> РезультатРасчёт
         # Применяем заправки до конца этой смены
         shift_end_date = shift.start + timedelta(days=shift.days - 1)
         shift_end_boundary = datetime.combine(shift_end_date, time(23, 59))
+        route_stops: List[str] = []
         for r in refuels:
             if not r["applied"] and r["when"] <= shift_end_boundary:
                 room = tank_volume - tank if tank_volume > 0 else r["volume"]
@@ -276,6 +278,8 @@ def calculate(inp: ВходныеДанные) -> РезультатРасчёт
                     )
                 tank += add
                 r["applied"] = True
+                if r["address"]:
+                    route_stops.append(f"АЗС: {r['address']}")
 
         opening_fuel = tank
         opening_odo = odo
@@ -307,6 +311,17 @@ def calculate(inp: ВходныеДанные) -> РезультатРасчёт
             total_hours = _round(drive_hours, 1)
             return_dt = departure + timedelta(hours=drive_hours)
 
+        # Маршрут (Шаг 2.1): стоянка (отправление) -> АЗС по чекам в хронологическом
+        # порядке этой смены -> стоянка (возвращение). Промежуточные рабочие адреса
+        # (погрузка/разгрузка/частотные адреса организации) — вне MVP, добавляются
+        # пользователем вручную позже; геокодинг/валидация «АЗС на маршруте» — неделя 3.
+        маршрут: List[str] = []
+        if inp.адресСтоянки:
+            маршрут.append(inp.адресСтоянки)
+        маршрут.extend(route_stops)
+        if inp.адресСтоянки:
+            маршрут.append(inp.адресСтоянки)
+
         листы.append(
             ПутевойЛист(
                 номер=i + 1,
@@ -322,6 +337,7 @@ def calculate(inp: ВходныеДанные) -> РезультатРасчёт
                 расходНорма=_round(burn, 2),
                 расходФакт=_round(burn, 2),
                 видСообщения=inp.видСообщения,
+                маршрут=маршрут,
             )
         )
 

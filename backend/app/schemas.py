@@ -39,6 +39,7 @@ class Заправка(BaseModel):
     дата: date
     время: Optional[time] = None
     объём: float = Field(gt=0)
+    адрес: Optional[str] = None  # адрес АЗС из чека — для алгоритма маршрута (Шаг 2.1)
 
     @field_validator("объём")
     @classmethod
@@ -66,6 +67,7 @@ class ВходныеДанные(BaseModel):
     остатокНаНачало: float = Field(default=0, ge=0)
     водители: List[Водитель] = Field(default_factory=list)
     заправки: List[Заправка] = Field(default_factory=list)
+    адресСтоянки: Optional[str] = None  # точка отправления/возврата (Шаг 2.1)
 
     @model_validator(mode="after")
     def _validate_business_rules(self) -> "ВходныеДанные":
@@ -121,6 +123,7 @@ class ПутевойЛист(BaseModel):
     расходНорма: float
     расходФакт: float
     видСообщения: ВидСообщения
+    маршрут: List[str] = Field(default_factory=list)  # текстовый список адресов (Шаг 2.1)
 
 
 class ПримененныйКоэффициент(BaseModel):
