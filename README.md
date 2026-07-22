@@ -4,9 +4,9 @@
 по чекам с АЗС. Реализует **Шаг 1.1** технического задания — калькулятор пробега
 с построчным текстовым выводом по каждому путевому листу.
 
-Стек: **Vite + React 18 + TypeScript**.
+Стек: **Vite + React 18 + TypeScript** (фронт) + **FastAPI / Python** (бэкенд, `backend/`).
 
-## Запуск
+## Фронт: запуск
 
 ```bash
 npm install
@@ -22,6 +22,18 @@ npm run preview  # предпросмотр собранной версии
 
 > Требуется Node.js 18+. Путь к проекту должен быть без кириллицы (иначе dev-сервер Vite на Windows может не отдавать модули).
 
+## Бэкенд: запуск
+
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+# Swagger: http://localhost:8000/docs
+```
+
+Подробности — `backend/README.md` и `WEEK1_NOTES.md`.
+
 ## Структура
 
 ```
@@ -29,22 +41,32 @@ npm run preview  # предпросмотр собранной версии
 ├─ package.json            # зависимости и скрипты
 ├─ tsconfig*.json          # конфигурация TypeScript
 ├─ vite.config.ts          # конфигурация Vite
-└─ src/
-   ├─ main.tsx             # монтирование React-приложения
-   ├─ App.tsx              # форма ввода + управление состоянием
-   ├─ calc.ts              # чистый движок расчёта (формулы, коэффициенты, ограничения)
-   ├─ types.ts             # типы данных
-   ├─ defaults.ts          # начальные и демо-данные
-   ├─ styles.css           # стили
-   └─ components/
-      ├─ Calendar.tsx      # календарь рабочих дней
-      ├─ DriversSection.tsx
-      ├─ RefuelsSection.tsx
-      └─ Results.tsx       # вывод путевых листов
+├─ WEEK1_NOTES.md          # пояснения к доработкам недели 1 (бэкенд)
+├─ src/
+│  ├─ main.tsx             # монтирование React-приложения
+│  ├─ App.tsx              # форма ввода + управление состоянием
+│  ├─ calc.ts              # чистый движок расчёта (формулы, коэффициенты, ограничения)
+│  ├─ types.ts             # типы данных
+│  ├─ defaults.ts          # начальные и демо-данные
+│  ├─ styles.css           # стили
+│  └─ components/
+│     ├─ Calendar.tsx      # календарь рабочих дней
+│     ├─ DriversSection.tsx
+│     ├─ RefuelsSection.tsx
+│     └─ Results.tsx       # вывод путевых листов
+└─ backend/                # FastAPI API (порт движка расчёта на Python)
+   ├─ README.md
+   ├─ requirements.txt
+   └─ app/
+      ├─ main.py           # FastAPI app, CORS, обработчик ошибок валидации
+      ├─ routes.py         # POST /api/calculate, GET /api/health
+      ├─ schemas.py        # pydantic-модели входа/выхода
+      └─ calc.py           # движок расчёта (порт src/calc.ts на Python)
 ```
 
-Вся логика расчёта изолирована в `src/calc.ts` (чистые функции без React) —
-её можно переиспользовать на шагах 1.2 и 2.x без изменений.
+Логика расчёта изолирована в `src/calc.ts` (фронт, чистые функции без React)
+и продублирована 1:1 в `backend/app/calc.py` (бэкенд) — оба движка дают
+одинаковый результат; их можно переиспользовать на шагах 1.2 и 2.x без изменений.
 
 ## Формулы и модель расчёта
 
