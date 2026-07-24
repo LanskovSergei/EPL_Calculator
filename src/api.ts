@@ -19,7 +19,7 @@ function numOrNull(v: number | '' | null | undefined): number | null {
   return v === '' || v === null || v === undefined ? null : v;
 }
 
-function toApiPayload(input: ВходныеДанные): Record<string, unknown> {
+export function toApiPayload(input: ВходныеДанные): Record<string, unknown> {
   return {
     ...input,
     объёмБака: numOrNull(input.объёмБака),
