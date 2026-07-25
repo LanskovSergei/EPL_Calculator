@@ -3,7 +3,8 @@ from fastapi.responses import Response
 
 from .calc import calculate
 from .forms import generate_form3_excel, generate_form3_pdf
-from .schemas import ЗапросФормыПЛ, РезультатРасчёта, ВходныеДанные
+from .forms_4c import generate_form4c_excel, generate_form4c_pdf
+from .schemas import ЗапросФормыПЛ, ЗапросФормы4С, РезультатРасчёта, ВходныеДанные
 
 router = APIRouter(prefix="/api", tags=["calc"])
 
@@ -63,4 +64,44 @@ def form3_pdf(payload: ЗапросФормыПЛ) -> Response:
         content=content,
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=putevoy-list-forma-3.pdf"},
+    )
+
+
+@router.post("/form4c/excel", tags=["forms"])
+def form4c_excel(payload: ЗапросФормы4С) -> Response:
+    """
+    Генерирует путевой лист форма №4-с (грузовой) в Excel — одна книга,
+    один лист на каждый рассчитанный путевой лист.
+    """
+    result = calculate(payload.расчёт)
+    if not result.листы:
+        raise HTTPException(
+            status_code=422,
+            detail=["Нет путевых листов для печати: " + "; ".join(result.предупреждения)],
+        )
+    content = generate_form4c_excel(payload, result)
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=putevoy-list-forma-4c.xlsx"},
+    )
+
+
+@router.post("/form4c/pdf", tags=["forms"])
+def form4c_pdf(payload: ЗапросФормы4С) -> Response:
+    """
+    Генерирует путевой лист форма №4-с (грузовой) в PDF — одна страница
+    на каждый рассчитанный путевой лист.
+    """
+    result = calculate(payload.расчёт)
+    if not result.листы:
+        raise HTTPException(
+            status_code=422,
+            detail=["Нет путевых листов для печати: " + "; ".join(result.предупреждения)],
+        )
+    content = generate_form4c_pdf(payload, result)
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=putevoy-list-forma-4c.pdf"},
     )

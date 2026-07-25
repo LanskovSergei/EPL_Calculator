@@ -122,3 +122,43 @@ def test_form3_rejects_грузовой_via_endpoint():
     payload["расчёт"]["типТС"] = "грузовой"
     resp = client.post("/api/form3/excel", json=payload)
     assert resp.status_code == 422
+
+
+def form4c_payload() -> dict:
+    return {
+        "расчёт": {**valid_payload(), "типТС": "грузовой"},
+        "организация": {"наименование": "ООО Дубрава", "инн": "7701234567"},
+        "тс": {"тип": "грузовой фургон", "госномер": "А900ТТ178"},
+        "водитель": {"фио": "Иванов И.И.", "удостоверение": "78 АБ 654321"},
+        "прицепы": [{"маркаМодель": "СЗАП 8357", "госномер": "АК123178"}],
+        "ездки": [
+            {
+                "пунктПогрузки": "г. Санкт-Петербург, ул. Заводская, 12",
+                "пунктРазгрузки": "г. Санкт-Петербург, ул. Весенняя, 58",
+                "наименованиеГруза": "Мебель",
+                "номерТТН": "9332",
+            }
+        ],
+    }
+
+
+def test_form4c_excel_endpoint_returns_xlsx():
+    resp = client.post("/api/form4c/excel", json=form4c_payload())
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
+def test_form4c_pdf_endpoint_returns_pdf():
+    resp = client.post("/api/form4c/pdf", json=form4c_payload())
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert resp.content[:4] == b"%PDF"
+
+
+def test_form4c_rejects_легковой_via_endpoint():
+    payload = form4c_payload()
+    payload["расчёт"]["типТС"] = "легковой"
+    resp = client.post("/api/form4c/excel", json=payload)
+    assert resp.status_code == 422
