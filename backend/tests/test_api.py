@@ -90,3 +90,35 @@ def test_calculate_accepts_empty_strings_for_optional_text_fields(field):
     payload[field] = ""
     resp = client.post("/api/calculate", json=payload)
     assert resp.status_code == 200
+
+
+def form3_payload() -> dict:
+    return {
+        "расчёт": {**valid_payload(), "типТС": "легковой"},
+        "организация": {"наименование": "ООО Ромашка", "инн": "7701234567"},
+        "тс": {"тип": "легковой", "госномер": "А123ВС777"},
+        "водитель": {"фио": "Иванов И.И.", "удостоверение": "77 АБ 123456"},
+    }
+
+
+def test_form3_excel_endpoint_returns_xlsx():
+    resp = client.post("/api/form3/excel", json=form3_payload())
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    assert len(resp.content) > 0
+
+
+def test_form3_pdf_endpoint_returns_pdf():
+    resp = client.post("/api/form3/pdf", json=form3_payload())
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert resp.content[:4] == b"%PDF"
+
+
+def test_form3_rejects_грузовой_via_endpoint():
+    payload = form3_payload()
+    payload["расчёт"]["типТС"] = "грузовой"
+    resp = client.post("/api/form3/excel", json=payload)
+    assert resp.status_code == 422
