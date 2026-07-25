@@ -162,3 +162,28 @@ def test_form4c_rejects_легковой_via_endpoint():
     payload["расчёт"]["типТС"] = "легковой"
     resp = client.post("/api/form4c/excel", json=payload)
     assert resp.status_code == 422
+
+
+def sync_1c_payload() -> dict:
+    return {
+        "расчёт": {**valid_payload(), "типТС": "грузовой"},
+        "организация": {"наименование": "ООО Дубрава", "инн": "7701234567"},
+        "тс": {"тип": "грузовой фургон", "госномер": "А900ТТ178"},
+    }
+
+
+def test_act_endpoint_returns_summary():
+    resp = client.post("/api/act", json=sync_1c_payload())
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["госномер"] == "А900ТТ178"
+    assert len(body["строки"]) >= 1
+
+
+def test_1c_sync_endpoint_without_config_returns_not_synced(monkeypatch):
+    monkeypatch.delenv("ONE_C_BASE_URL", raising=False)
+    resp = client.post("/api/1c/sync", json=sync_1c_payload())
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["synced"] is False
+    assert "акт" in body
