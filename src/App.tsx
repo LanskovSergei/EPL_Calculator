@@ -6,6 +6,12 @@ import { начальныеДанные, демоДанные } from './defaults
 import { DriversSection } from './components/DriversSection';
 import { RefuelsSection } from './components/RefuelsSection';
 import { Results } from './components/Results';
+import {
+  ConsentBanner,
+  ContactsBlock,
+  UserAgreementModal,
+  useAgreementModal,
+} from './components/Legal';
 
 function validate(input: ВходныеДанные): string[] {
   const errs: string[] = [];
@@ -29,6 +35,7 @@ export default function App() {
   const [data, setData] = useState<ВходныеДанные>(начальныеДанные);
   const [result, setResult] = useState<РезультатРасчёта | null>(null);
   const [loading, setLoading] = useState(false);
+  const { open, openAgreement, closeAgreement } = useAgreementModal();
 
   const upd = <K extends keyof ВходныеДанные>(key: K, value: ВходныеДанные[K]) =>
     setData((d) => ({ ...d, [key]: value }));
@@ -55,12 +62,28 @@ export default function App() {
   return (
     <>
       <header className="app-header">
-        <h1>Калькулятор пробега ГСМ</h1>
-        <p>Внутренний инструмент · Этап 1, Шаг 1.1 · восстановление путевых листов по чекам АЗС</p>
+        <div className="header-inner">
+          <a className="brand" href="https://предрейс.рф/" target="_blank" rel="noreferrer">
+            <span className="brand-mark-glyph">П</span>
+            <span className="brand-copy">
+              <strong>ПРЕДРЕЙС</strong>
+              <span>Калькулятор ГСМ</span>
+            </span>
+          </a>
+          <div className="header-meta">
+            <a href="tel:+79250288755">+7 (925) 028-87-55</a>
+            <span className="header-badge">открытая версия</span>
+          </div>
+        </div>
+        <div className="header-title">
+          <h1>Калькулятор пробега ГСМ</h1>
+          <p>Восстановление путевых листов по чекам АЗС · для бухгалтерии и диспетчерских служб</p>
+        </div>
       </header>
 
+      <ConsentBanner onOpenAgreement={openAgreement} />
+
       <main className="container">
-        {/* 1. Транспортное средство */}
         <section className="card">
           <h2>1. Транспортное средство</h2>
           <div className="grid">
@@ -118,7 +141,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* 2. Период и вид сообщения */}
         <section className="card">
           <h2>2. Период и вид сообщения</h2>
           <div className="grid">
@@ -150,9 +172,8 @@ export default function App() {
           </div>
         </section>
 
-        {/* 3. Начальные показатели */}
         <section className="card">
-          <h2>3. Начальные показатели (на начало периода)</h2>
+          <h2>3. Начальные показатели и стоянка</h2>
           <div className="grid">
             <div className="field">
               <label>Показания одометра, км <span className="hint">(необязательно)</span></label>
@@ -164,10 +185,18 @@ export default function App() {
               <input type="number" min={0} step={0.1} placeholder="Напр., 20" value={data.остатокНаНачало}
                 onChange={(e) => upd('остатокНаНачало', numField(e.target.value))} />
             </div>
+            <div className="field field-wide">
+              <label>Адрес официальной стоянки <span className="hint">(точка выпуска и возврата)</span></label>
+              <input
+                type="text"
+                placeholder="Город, улица, дом — где медосмотр и техконтроль"
+                value={data.адресСтоянки ?? ''}
+                onChange={(e) => upd('адресСтоянки', e.target.value)}
+              />
+            </div>
           </div>
         </section>
 
-        {/* 4. Водители */}
         <DriversSection
           водители={data.водители}
           периодС={data.периодС}
@@ -175,7 +204,6 @@ export default function App() {
           onChange={(водители) => upd('водители', водители)}
         />
 
-        {/* 5. Заправки */}
         <RefuelsSection заправки={data.заправки} onChange={(заправки) => upd('заправки', заправки)} />
 
         <div className="calc-actions">
@@ -190,8 +218,24 @@ export default function App() {
           </button>
         </div>
 
-        <Results результат={result} />
+        <Results
+          результат={result}
+          onChange={setResult}
+          onOpenAgreement={openAgreement}
+        />
       </main>
+
+      <footer className="app-footer">
+        <ContactsBlock />
+        <p>
+          © ПРЕДРЕЙС ·{' '}
+          <button type="button" className="link-btn" onClick={openAgreement}>
+            Пользовательское соглашение
+          </button>
+        </p>
+      </footer>
+
+      <UserAgreementModal open={open} onClose={closeAgreement} />
     </>
   );
 }

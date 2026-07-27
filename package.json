@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Калькулятор пробега ГСМ — Этап 1, Шаг 1.1 (внутренний инструмент)",
+  "description": "Калькулятор пробега ГСМ — открытая версия для сайта Предрейс (Шаг 1.2)",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

@@ -242,6 +242,7 @@ export function calculate(input: ВходныеДанные): Результат
     .map((r) => ({
       when: new Date(`${r.дата}T${r.время || '00:00'}`),
       volume: num(r.объём),
+      address: (r.адрес || '').trim(),
       applied: false,
     }))
     .sort((a, b) => a.when.getTime() - b.when.getTime());
@@ -270,6 +271,7 @@ export function calculate(input: ВходныеДанные): Результат
     // Применяем заправки до конца этой смены
     const shiftEndDate = addDays(shift.start, shift.days - 1);
     const shiftEndBoundary = new Date(`${toISODate(shiftEndDate)}T23:59`);
+    const routeStops: string[] = [];
     for (const r of refuels) {
       if (!r.applied && r.when <= shiftEndBoundary) {
         const room = tankVolume > 0 ? tankVolume - tank : r.volume;
@@ -282,6 +284,7 @@ export function calculate(input: ВходныеДанные): Результат
         }
         tank += add;
         r.applied = true;
+        if (r.address) routeStops.push(`АЗС: ${r.address}`);
       }
     }
 
@@ -316,6 +319,11 @@ export function calculate(input: ВходныеДанные): Результат
       returnDt = new Date(departure.getTime() + driveHours * 3600000);
     }
 
+    const маршрут: string[] = [];
+    if (input.адресСтоянки) маршрут.push(input.адресСтоянки);
+    маршрут.push(...routeStops);
+    if (input.адресСтоянки) маршрут.push(input.адресСтоянки);
+
     листы.push({
       номер: i + 1,
       выпуск: formatDateTime(departure),
@@ -330,6 +338,7 @@ export function calculate(input: ВходныеДанные): Результат
       расходНорма: round(burn, 2),
       расходФакт: round(burn, 2),
       видСообщения: input.видСообщения,
+      маршрут,
     });
 
     tank = closingFuel;
